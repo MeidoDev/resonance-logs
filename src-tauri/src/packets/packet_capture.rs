@@ -25,6 +25,7 @@ const DLT_NULL: i32 = 0;
 const DLT_EN10MB: i32 = 1;
 const DLT_RAW: i32 = 12;
 const DLT_LOOP: i32 = 108;
+const DLT_LINUX_SLL: i32 = 113; // Linux cooked capture ("any" device)
 
 #[derive(Clone, Debug)]
 pub enum CaptureMethod {
@@ -93,6 +94,15 @@ impl NpcapSource {
                 }
             }
             DLT_RAW => Some(data.to_vec()),
+            // Linux cooked capture header (used by the "any" device):
+            // 16-byte header, protocol type at bytes 14-15 (same as Ethernet).
+            DLT_LINUX_SLL => {
+                if data.len() > 16 && data[14] == 0x08 && data[15] == 0x00 {
+                    Some(data[16..].to_vec())
+                } else {
+                    None
+                }
+            }
             DLT_NULL | DLT_LOOP => {
                 if data.len() <= 4 {
                     return None;
