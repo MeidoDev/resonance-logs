@@ -29,7 +29,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 tracing-appender = "0.2"
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 chrono = "0.4.41"
-windivert = {version = "0.6.0", features = ["vendored"] }
 etherparse = "0.19.0"
 tokio = {version = "1.47.1", features = ["macros"] }
 log = "0.4.28"
@@ -71,4 +70,7 @@ path = "./src/blueprotobuf-lib"
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-global-shortcut = "2.3.1"
 tauri-plugin-updater = "2"
+
+[target.'cfg(windows)'.dependencies]
+windivert = { version = "0.6.0", features = ["vendored"] }
 

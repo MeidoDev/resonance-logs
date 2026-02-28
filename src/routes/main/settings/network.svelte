@@ -3,6 +3,7 @@
     import SettingsDropdown from "./settings-dropdown.svelte";
     import { SETTINGS } from "$lib/settings-store";
     import { invoke } from "@tauri-apps/api/core";
+    import { platform } from "@tauri-apps/plugin-os";
     import { onMount } from "svelte";
     import { untrack } from "svelte";
 
@@ -15,6 +16,7 @@
     let npcapInstalled = $state(false);
     let loading = $state(false);
     let mounted = $state(false);
+    let isLinux = $state(false);
     // Track initial values to detect actual user changes
     let initialMethod = $state<string | null>(null);
     let initialDevice = $state<string | null>(null);
@@ -32,7 +34,7 @@
         loading = false;
     }
 
-    onMount(() => {
+    onMount(async () => {
         // Capture initial values before marking as mounted
         // Use untrack to avoid reactive dependencies
         untrack(() => {
@@ -41,6 +43,12 @@
         });
         mounted = true;
         loadDevices();
+
+        isLinux = (await platform()) === "linux";
+        // WinDivert is not available on Linux — silently correct the stored default
+        if (isLinux && SETTINGS.packetCapture.state.method === "WinDivert") {
+            SETTINGS.packetCapture.state.method = "Npcap";
+        }
     });
 
     $effect(() => {
@@ -63,6 +71,8 @@
         }).catch((e) => console.error("Failed to save packet capture settings", e));
     });
 
+    let captureMethodOptions = $derived(isLinux ? ["Npcap"] : ["WinDivert", "Npcap"]);
+
     let deviceOptions = $derived(
         devices.map((d) => ({
             value: d.name,
@@ -84,7 +94,7 @@
                 bind:selected={SETTINGS.packetCapture.state.method}
                 label="Capture Method"
                 description="Select the method used to capture network packets. Requires application restart."
-                values={["WinDivert", "Npcap"]}
+                values={captureMethodOptions}
             />
 
             {#if SETTINGS.packetCapture.state.method === "Npcap"}

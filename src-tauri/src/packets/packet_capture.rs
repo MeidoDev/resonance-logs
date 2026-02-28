@@ -11,9 +11,9 @@ use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
 use std::sync::OnceLock;
 use tokio::sync::watch;
-use windivert::WinDivert;
-use windivert::prelude::NetworkLayer;
-use windivert::prelude::WinDivertFlags;
+#[cfg(windows)] use windivert::WinDivert;
+#[cfg(windows)] use windivert::prelude::NetworkLayer;
+#[cfg(windows)] use windivert::prelude::WinDivertFlags;
 
 // Global sender for restart signal
 static RESTART_SENDER: OnceCell<watch::Sender<bool>> = OnceCell::new();
@@ -28,6 +28,7 @@ const DLT_LOOP: i32 = 108;
 
 #[derive(Clone, Debug)]
 pub enum CaptureMethod {
+    #[cfg(windows)]
     WinDivert,
     Npcap(String),
 }
@@ -36,11 +37,13 @@ trait PacketSource: Send {
     fn next_packet(&mut self) -> Result<Option<Vec<u8>>, String>;
 }
 
+#[cfg(windows)]
 struct WinDivertSource {
     handle: WinDivert<NetworkLayer>,
     buffer: Vec<u8>,
 }
 
+#[cfg(windows)]
 impl WinDivertSource {
     fn new() -> Result<Self, String> {
         let handle = WinDivert::network(
@@ -59,6 +62,7 @@ impl WinDivertSource {
     }
 }
 
+#[cfg(windows)]
 impl PacketSource for WinDivertSource {
     fn next_packet(&mut self) -> Result<Option<Vec<u8>>, String> {
         self.handle
@@ -143,6 +147,7 @@ pub fn start_capture(
     RESTART_SENDER.set(restart_sender.clone()).ok();
 
     match &method {
+        #[cfg(windows)]
         CaptureMethod::WinDivert => {
             info!(target: "app::capture", "capture_start method=WinDivert")
         }
@@ -189,6 +194,7 @@ fn read_packets(
     let _read_guard = read_span.enter();
 
     let mut source: Box<dyn PacketSource> = match method {
+        #[cfg(windows)]
         CaptureMethod::WinDivert => match WinDivertSource::new() {
             Ok(s) => Box::new(s),
             Err(e) => {

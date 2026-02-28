@@ -282,8 +282,16 @@ fn get_capture_method(app: &AppHandle) -> packets::packet_capture::CaptureMethod
                         info!(target: "app::capture", "Using Npcap capture method device={}", device);
                         return CaptureMethod::Npcap(device.to_string());
                     } else {
-                        info!(target: "app::capture", "Using WinDivert capture method (from config)");
-                        return CaptureMethod::WinDivert;
+                        #[cfg(windows)]
+                        {
+                            info!(target: "app::capture", "Using WinDivert capture method (from config)");
+                            return CaptureMethod::WinDivert;
+                        }
+                        #[cfg(not(windows))]
+                        {
+                            warn!(target: "app::capture", "WinDivert not available on Linux; using Npcap with 'any' device");
+                            return CaptureMethod::Npcap("any".to_string());
+                        }
                     }
                 } else {
                     warn!(
@@ -326,8 +334,16 @@ fn get_capture_method(app: &AppHandle) -> packets::packet_capture::CaptureMethod
                             info!(target: "app::capture", "Using Npcap capture method device={}", device);
                             return CaptureMethod::Npcap(device.to_string());
                         } else {
-                            info!(target: "app::capture", "Using WinDivert capture method (from config)");
-                            return CaptureMethod::WinDivert;
+                            #[cfg(windows)]
+                            {
+                                info!(target: "app::capture", "Using WinDivert capture method (from config)");
+                                return CaptureMethod::WinDivert;
+                            }
+                            #[cfg(not(windows))]
+                            {
+                                warn!(target: "app::capture", "WinDivert not available on Linux; using Npcap with 'any' device");
+                                return CaptureMethod::Npcap("any".to_string());
+                            }
                         }
                     } else {
                         warn!(
@@ -340,8 +356,16 @@ fn get_capture_method(app: &AppHandle) -> packets::packet_capture::CaptureMethod
         }
     }
 
-    warn!(target: "app::capture", "No packetCapture config found in app data dirs; falling back to WinDivert");
+    warn!(target: "app::capture", "No packetCapture config found in app data dirs; falling back to default");
 
-    info!(target: "app::capture", "Using WinDivert capture method (default)");
-    CaptureMethod::WinDivert
+    #[cfg(windows)]
+    {
+        info!(target: "app::capture", "Using WinDivert capture method (default)");
+        CaptureMethod::WinDivert
+    }
+    #[cfg(not(windows))]
+    {
+        info!(target: "app::capture", "WinDivert not available on Linux; using Npcap with 'any' device (default)");
+        CaptureMethod::Npcap("any".to_string())
+    }
 }

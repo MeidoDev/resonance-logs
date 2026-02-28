@@ -124,8 +124,11 @@ pub fn run() {
             let _setup_guard = setup_span.enter();
 
             log::info!(target: "app::startup", "starting app v{}", app.package_info().version);
-            stop_windivert();
-            remove_windivert();
+            #[cfg(windows)]
+            {
+                stop_windivert();
+                remove_windivert();
+            }
 
             // Initialize database and background writer early to avoid startup races where
             // multiple background tasks/commands trigger migrations concurrently.
@@ -309,11 +312,7 @@ mod debug_commands {
 
         #[cfg(not(target_os = "windows"))]
         {
-            // For other OSs, we can use 'open' (macOS) or 'xdg-open' (Linux)
-            // But since this is a Windows-focused request, I'll essentially leave it as a no-op or specific to Windows for now based on user context.
-            // But good to have a fallback or error.
-            // Using `open` crate or tauri's `open` plugin would be better but let's stick to simple Command for now as requested.
-            // Actually, tauri_plugin_opener is initialized in lib.rs, so we might utilize that if we want, but 'explorer' is specific.
+            use std::process::Command;
             Command::new("xdg-open")
                 .arg(&log_dir)
                 .spawn()
@@ -340,6 +339,7 @@ mod debug_commands {
 /// Starts the WinDivert driver.
 ///
 /// This function executes a shell command to create and start the WinDivert driver service.
+#[cfg(windows)]
 #[allow(dead_code)]
 fn start_windivert() {
     // Run the command silently (no console window) on Windows. On other platforms, just
@@ -366,6 +366,7 @@ fn start_windivert() {
 /// Stops the WinDivert driver.
 ///
 /// This function executes a shell command to stop the WinDivert driver service.
+#[cfg(windows)]
 fn stop_windivert() {
     let mut cmd = Command::new("sc");
     cmd.args(["stop", "windivert"]);
@@ -380,6 +381,7 @@ fn stop_windivert() {
 /// Removes the WinDivert driver.
 ///
 /// This function executes a shell command to delete the WinDivert driver service.
+#[cfg(windows)]
 fn remove_windivert() {
     let mut cmd = Command::new("sc");
     cmd.args(["delete", "windivert", "start=", "demand"]);
@@ -411,6 +413,7 @@ fn unload_and_remove_windivert() {
 
 /// Helper to run a prepared Command with stdio redirected to null and (on Windows)
 /// with the CREATE_NO_WINDOW flag so no console window appears.
+#[cfg(windows)]
 fn run_command_silently(cmd: &mut Command) -> std::io::Result<std::process::ExitStatus> {
     #[cfg(windows)]
     {
@@ -774,6 +777,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
                 }
             }
             "quit" => {
+                #[cfg(windows)]
                 stop_windivert();
                 tray_app.exit(0);
             }

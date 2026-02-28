@@ -47,11 +47,20 @@ pub struct NpcapContext {
 
 impl NpcapContext {
     pub fn new() -> Result<Self, String> {
-        unsafe {
-            let lib = Library::new("wpcap.dll")
-                .map_err(|e| format!("Failed to load wpcap.dll: {}", e))?;
-            Ok(Self { lib: Arc::new(lib) })
-        }
+        let lib = {
+            #[cfg(windows)]
+            {
+                unsafe { Library::new("wpcap.dll") }
+                    .map_err(|e| format!("Failed to load wpcap.dll: {}", e))?
+            }
+            #[cfg(not(windows))]
+            {
+                unsafe { Library::new("libpcap.so.1") }
+                    .or_else(|_| unsafe { Library::new("libpcap.so") })
+                    .map_err(|e| format!("Failed to load libpcap: {}", e))?
+            }
+        };
+        Ok(Self { lib: Arc::new(lib) })
     }
 
     pub fn list_devices(&self) -> Result<Vec<Device>, String> {

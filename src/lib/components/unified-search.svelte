@@ -147,6 +147,13 @@
 	});
 </script>
 
+<style>
+	.unified-search-container {
+		/* ensure the container establishes a positioning context */
+		position: relative;
+	}
+</style>
+
 <div class="unified-search-container relative flex items-stretch gap-0">
 	<!-- Type Selector Dropdown -->
 	<div class="type-dropdown-container relative">
@@ -241,10 +248,3 @@
 		{/if}
 	</div>
 </div>
-
-<style>
-	.unified-search-container {
-		/* ensure the container establishes a positioning context */
-		position: relative;
-	}
-</style>

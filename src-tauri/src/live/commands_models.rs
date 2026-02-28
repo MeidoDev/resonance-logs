@@ -1,6 +1,5 @@
 use crate::WINDOW_LIVE_LABEL;
 use tauri::Manager;
-use window_vibrancy::apply_blur;
 
 /// Represents the health of a boss.
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Default, Clone, PartialEq)]
