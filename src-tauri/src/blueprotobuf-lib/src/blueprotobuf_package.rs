@@ -89,12 +89,10 @@ pub struct AoiSyncDelta {
     #[prost(message, optional, tag = "9")]
     pub passive_skill_end_infos: ::core::option::Option<SeqPassiveSkillEndInfo>,
     #[prost(message, optional, tag = "10")]
-    pub buff_infos: ::core::option::Option<BuffInfoSync>,
-    #[prost(message, optional, tag = "11")]
     pub buff_effect: ::core::option::Option<BuffEffectSync>,
-    #[prost(message, repeated, tag = "12")]
+    #[prost(message, repeated, tag = "11")]
     pub fake_bullets: ::prost::alloc::vec::Vec<FakeBulletInfo>,
-    #[prost(message, repeated, tag = "13")]
+    #[prost(message, repeated, tag = "12")]
     pub magnetic_ride_queue_change_info_list: ::prost::alloc::vec::Vec<
         MagneticRideQueueChangeInfo,
     >,
